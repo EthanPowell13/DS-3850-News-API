@@ -2,18 +2,25 @@ import json
 import urllib.request
 from datetime import date
 from config import NEWS_API_KEY
+from summarize import OPENAI_API_KEY
 
-def format_newsletter(topic: str, summaries: list) -> str:
+
+
+def format_newsletter(report: str, topic: str) -> str:
+
+    AI_API_KEY = OPENAI_API_KEY
+
     today = date.today().strftime("%B %d, %Y")
 
     prompt = (
         f"Create a clean, engaging email newsletter for the topic '{topic}' "
-        f"on {today}. The content should be friendly, professional, and include bullet points. "
-        f"Below are the article summaries:\n\n"
+        f"on {today}. The content should be friendly, professional, and include a brief summary. "
+        f"Below are the compiled article summaries:\n\n"
+        f"{report}\n"
+        f"Write your response in html that can be embedded in an email"
+        f"Be sure to make it look pretty, and include a header."
+        f"Use 'Daily News by AI' as the heading"
     )
-
-    for idx, summary in enumerate(summaries, start=1):
-        prompt += f"{idx}. {summary}\n\n"
 
     request_body = json.dumps({
         "model": "gpt-3.5-turbo",
@@ -23,7 +30,8 @@ def format_newsletter(topic: str, summaries: list) -> str:
 
     req = urllib.request.Request("https://api.openai.com/v1/chat/completions", data=request_body)
     req.add_header("Content-Type", "application/json")
-    req.add_header("Authorization", f"Bearer {NEWS_API_KEY}")
+    req.add_header("Authorization", f"Bearer {AI_API_KEY}")
+
 
     try:
         with urllib.request.urlopen(req) as response:
@@ -31,3 +39,4 @@ def format_newsletter(topic: str, summaries: list) -> str:
             return result["choices"][0]["message"]["content"].strip()
     except Exception as e:
         return f"Error formatting newsletter: {e}"
+        
